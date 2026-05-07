@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WOTS FieldSync Form</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      .glass {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+    </style>
+  </head>
+  <body
+    class="bg-slate-900 text-white min-h-screen p-4 flex items-center justify-center"
+  >
+    <div class="glass p-6 rounded-2xl w-full max-w-md shadow-2xl">
+      <h1 class="text-2xl font-bold mb-2">WOTS FieldSync</h1>
+      <p id="siteName" class="text-slate-400 mb-6 text-sm">
+        Loading site details...
+      </p>
+
+      <form id="delayForm" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold uppercase mb-1"
+            >Delay Code</label
+          >
+          <select
+            id="code"
+            required
+            class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white"
+          >
+            <option value="D1">D1: Client Site Not Ready</option>
+            <option value="D2">D2: Access / Logistics</option>
+            <option value="D5">D5: Weather / Force Majeure</option>
+            <option value="D8">D8: Ops Planning / Equipment</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase mb-1"
+            >Hours Lost</label
+          >
+          <input
+            type="number"
+            id="hours"
+            step="0.5"
+            required
+            placeholder="e.g. 4.5"
+            class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase mb-1"
+            >Notes / Comments</label
+          >
+          <textarea
+            id="notes"
+            rows="3"
+            placeholder="Describe the cause..."
+            class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white"
+          ></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase mb-1"
+            >Evidence (Photos/Videos)</label
+          >
+          <input
+            type="file"
+            id="media"
+            multiple
+            accept="image/*,video/*"
+            class="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700"
+          />
+          <p class="text-[10px] mt-1 text-slate-500">
+            Note: Files will be sent as separate attachments after you submit.
+          </p>
+        </div>
+
+        <button
+          type="submit"
+          class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-blue-900/20"
+        >
+          Generate WhatsApp Message
+        </button>
+      </form>
+    </div>
+
+    <script>
+      // Parse the Base64 data from the URL (sent by the Bot)
+      const urlParams = new URLSearchParams(window.location.search);
+      const encodedData = urlParams.get("data");
+      let session = { s: "Unknown Site" };
+
+      if (encodedData) {
+        try {
+          session = JSON.parse(atob(encodedData));
+          document.getElementById("siteName").innerText =
+            `Logging for: ${session.s}`;
+        } catch (e) {
+          console.error("Invalid session data");
+        }
+      }
+
+      document.getElementById("delayForm").onsubmit = (e) => {
+        e.preventDefault();
+
+        const code = document.getElementById("code").value;
+        const hours = document.getElementById("hours").value;
+        const notes = document.getElementById("notes").value;
+
+        // This is the structured format the Bot-v2 expects
+        const submission = `WOTS_SUBMISSION:{"code":"${code}","hours":${hours},"site":"${session.s}","notes":"${notes}"}`;
+
+        // Open WhatsApp with the pre-filled message
+        const waLink = `https://wa.me/${session.botNumber || ""}?text=${encodeURIComponent(submission)}`;
+        window.location.href = waLink;
+      };
+    </script>
+  </body>
+</html>
